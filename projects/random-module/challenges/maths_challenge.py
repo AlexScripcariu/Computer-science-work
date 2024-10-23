@@ -16,3 +16,4 @@ for i in range(5):
         print(f"Incorrect! Answer: {total}")
 
 print(f"Your total score is: {score}")
+print("Great job!")
