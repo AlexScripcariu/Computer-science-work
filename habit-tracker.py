@@ -1,38 +1,45 @@
-from datetime import datetime, timedelta
-
-# Thanks for checking out my code, I hope this really helps
-habits = []
+from datetime import datetime
+import json
 
 
-class Habit: 
-    def __init__(self, name):
-        self.name = name
-        self.DATE_CREATION = datetime.today().date()
+class Habit:
+    def __init__(self, habit):
+        self.habit = habit
         self.streak = 0
-        self.total_days = 0 # This is the total amount days available to do the habit
-        self.total_completed = 0 # This is how many times you have completed the habit
+        self.last_logged = datetime(2025, 1, 14).date()
 
-    def get_habit_percentage(self):
-        return self.total_completed / self.total_days
+        # load data if the file exists, otherwise save initial data
+        try:
+            self.load_data()
+        except FileNotFoundError:
+            self.save_data()
 
+    def save_data(self):
+        with open("habit_stats.json", "w") as file:
+            json.dump(
+                {**vars(self), "last_logged": str(self.last_logged)},
+                file,
+                indent=4
+            )
 
-def create_habit(habit_list):
-    habit_name = input("Please enter the name of your habit: ")
-    created_habit = Habit(habit_name)
-    habit_list.append(created_habit)
+    def load_data(self):
+        with open("habit_stats.json", "r") as file:
+            data = json.load(file)
+            self.__dict__.update(
+                {key: datetime.strptime(value, "%Y-%m-%d").date() if key == "last_logged" else value
+                 for key, value in data.items()}
+            )
 
-def log_habit(habit):
-    current_date = datetime.today().date()
+    def log(self):
+        current_date = datetime.today().date()
+        if self.last_logged == current_date:
+            print("You have already logged your habit today!")
+            return
 
-    difference = current_date - habit.DATE_CREATION
-    print(difference.days)
+        if input("Press Enter to confirm the log, 'n' to cancel: ") == 'n':
+            return
 
-    habit.streak += 1
-    habit.total_completed += 1
-    print("Congratulations on completing the habit!")
-
-
-
-create_habit(habits)
-
-log_habit(habits[0])
+        self.streak = self.streak + 1 if (current_date - self.last_logged).days == 1 else 1
+        self.last_logged = current_date
+        self.save_data()
+        print(f"Successfully logged! '{self.habit}' Streak: {self.streak}")
